@@ -1,11 +1,34 @@
-# calorie_tracker.py
 import streamlit as st
 from datetime import datetime, date
 import pandas as pd
 import db
 import auth
+import sqlite3
 
 db.init_db()
+
+# One-time admin creation (for dev only — remove after use)
+if st.sidebar.button("Create Admin"):
+    created = auth.register_backend("admin", "admin123", role="admin")
+    if created:
+        st.success("Admin account created. Username: admin, Password: admin123")
+    else:
+        st.warning("Admin already exists.")
+
+if st.session_state.get("logged_in"):
+    st.sidebar.subheader("Logged in as: " + st.session_state["username"])
+
+    role = db.get_user_role(st.session_state["user_id"])
+    st.sidebar.info(f"Role: {role}")
+
+    if role == "admin":
+        st.sidebar.success("Admin Access")
+        if st.sidebar.button("View All Entries"):
+            all_entries = db.get_all_entries()
+            st.write("### All User Entries")
+            for username, food, calories, timestamp in all_entries:
+                st.write(f"👤 {username} | 🍽️ {food} | 🔥 {calories} cal | 🕒 {timestamp}")
+
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -14,8 +37,20 @@ if not st.session_state.logged_in:
     page = st.sidebar.radio("Auth", ["Login", "Register"])
     if page == "Login":
         auth.login()
-    else:
-        auth.register()
+    elif page == "Register":
+        st.subheader("Create New Account")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        if st.button("Register"):
+            if username and password:
+                success = auth.register(username, password)
+                if success:
+                    st.success("User registered successfully!")
+                else:
+                    st.error("Username already exists.")
+            else:
+                st.warning("Please enter both username and password.")
+
 else:
     st.sidebar.success(f"Logged in as {st.session_state.username}")
     menu = st.sidebar.radio("Menu", ["Add Meal", "View Log", "Summary", "Logout"])

@@ -1,5 +1,7 @@
 import streamlit as st
 import db
+import sqlite3
+from db import DB_NAME
 
 def login():
     st.subheader("🔐 Login")
@@ -15,7 +17,7 @@ def login():
         else:
             st.error("Invalid username or password.")
 
-def register():
+def register_ui():
     st.subheader("📝 Register")
     new_username = st.text_input("New Username")
     new_password = st.text_input("New Password", type="password")
@@ -25,3 +27,18 @@ def register():
             st.success("Registered successfully! Please log in.")
         else:
             st.error("Username already exists.")
+
+# Rename this backend function
+def register_backend(username, password, role="user"):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    try:
+        c.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (username, password, role))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+
