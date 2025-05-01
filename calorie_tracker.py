@@ -22,7 +22,7 @@ else:
 
     if menu == "Logout":
         st.session_state.logged_in = False
-        st.experimental_rerun()
+        st.rerun()
 
     if menu == "Add Meal":
         st.header("➕ Add Meal")
