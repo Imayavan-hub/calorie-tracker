@@ -7,7 +7,6 @@ import sqlite3
 def init_db():
     with sqlite3.connect(DB_NAME) as conn:
         c = conn.cursor()
-        # Check if 'role' column exists, if not, add it
         c.execute("PRAGMA table_info(users)")
         columns = [col[1] for col in c.fetchall()]
         if "role" not in columns:

@@ -28,7 +28,6 @@ def register_ui():
         else:
             st.error("Username already exists.")
 
-# Rename this backend function
 def register_backend(username, password, role="user"):
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()

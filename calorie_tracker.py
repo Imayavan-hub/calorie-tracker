@@ -9,9 +9,9 @@ db.init_db()
 
 # One-time admin creation (for dev only — remove after use)
 if st.sidebar.button("Create Admin"):
-    created = auth.register_backend("admin", "admin123", role="admin")
+    created = auth.register_backend("naan mattum dhaan login pannuva", "poda no password", role="admin")
     if created:
-        st.success("Admin account created. Username: admin, Password: admin123")
+        st.success("Admin account created.")
     else:
         st.warning("Admin already exists.")
 
