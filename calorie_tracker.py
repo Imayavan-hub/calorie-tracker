@@ -6,6 +6,7 @@ import auth
 import sqlite3
 
 db.init_db()
+<script src="https://assets.refref.ai/widget.js"></script>
 
 # One-time admin creation (for dev only — remove after use)
 if st.sidebar.button("Create Admin"):
