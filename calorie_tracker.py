@@ -4,18 +4,36 @@ import pandas as pd
 import db
 import auth
 import sqlite3
+import streamlit.components.v1 as components
 
+# Initialize DB
 db.init_db()
-<script src="https://assets.refref.ai/widget.js"></script>
 
-# One-time admin creation (for dev only — remove after use)
+# ✅ Correct way to inject external JS
+components.html(
+    """
+    <script src="https://assets.refref.ai/widget.js"></script>
+    """,
+    height=0,
+)
+
+# One-time admin creation (DEV ONLY — remove in prod)
 if st.sidebar.button("Create Admin"):
-    created = auth.register_backend("naan mattum dhaan login pannuva", "poda no password", role="admin")
+    created = auth.register_backend(
+        "naan mattum dhaan login pannuva",
+        "poda no password",
+        role="admin"
+    )
     if created:
         st.success("Admin account created.")
     else:
         st.warning("Admin already exists.")
 
+# Ensure session state
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+# Logged-in user info
 if st.session_state.get("logged_in"):
     st.sidebar.subheader("Logged in as: " + st.session_state["username"])
 
@@ -30,18 +48,18 @@ if st.session_state.get("logged_in"):
             for username, food, calories, timestamp in all_entries:
                 st.write(f"👤 {username} | 🍽️ {food} | 🔥 {calories} cal | 🕒 {timestamp}")
 
-
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-
+# ================= AUTH =================
 if not st.session_state.logged_in:
     page = st.sidebar.radio("Auth", ["Login", "Register"])
+
     if page == "Login":
         auth.login()
+
     elif page == "Register":
         st.subheader("Create New Account")
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
+
         if st.button("Register"):
             if username and password:
                 success = auth.register(username, password)
@@ -52,6 +70,7 @@ if not st.session_state.logged_in:
             else:
                 st.warning("Please enter both username and password.")
 
+# ================= MAIN APP =================
 else:
     st.sidebar.success(f"Logged in as {st.session_state.username}")
     menu = st.sidebar.radio("Menu", ["Add Meal", "View Log", "Summary", "Logout"])
@@ -67,22 +86,44 @@ else:
             cal = st.number_input("Calories", min_value=0)
             ing = st.text_area("Ingredients")
             dt = st.date_input("Date", date.today())
+
             submitted = st.form_submit_button("Add Meal")
             if submitted and meal:
-                db.insert_meal(st.session_state.user_id, meal, cal, ing, dt.strftime("%Y-%m-%d"), datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                db.insert_meal(
+                    st.session_state.user_id,
+                    meal,
+                    cal,
+                    ing,
+                    dt.strftime("%Y-%m-%d"),
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                )
                 st.success("Meal added!")
 
     if menu == "View Log":
         st.header("📋 Your Meal Log")
         all_meals = db.get_meals(st.session_state.user_id)
+
         if all_meals:
-            df = pd.DataFrame(all_meals, columns=["ID", "User ID", "Meal", "Calories", "Ingredients", "Date", "Timestamp"])
+            df = pd.DataFrame(
+                all_meals,
+                columns=["ID", "User ID", "Meal", "Calories", "Ingredients", "Date", "Timestamp"],
+            )
             st.dataframe(df)
+
             filter_date = st.date_input("Filter by Date", date.today())
-            filtered = db.get_meals_by_date(st.session_state.user_id, filter_date.strftime("%Y-%m-%d"))
+            filtered = db.get_meals_by_date(
+                st.session_state.user_id,
+                filter_date.strftime("%Y-%m-%d"),
+            )
+
             if filtered:
                 st.subheader(f"Meals on {filter_date}")
-                st.dataframe(pd.DataFrame(filtered, columns=["ID", "User ID", "Meal", "Calories", "Ingredients", "Date", "Timestamp"]))
+                st.dataframe(
+                    pd.DataFrame(
+                        filtered,
+                        columns=["ID", "User ID", "Meal", "Calories", "Ingredients", "Date", "Timestamp"],
+                    )
+                )
             else:
                 st.info("No meals on this date.")
         else:
@@ -91,9 +132,13 @@ else:
     if menu == "Summary":
         st.header("📊 Calorie Summary")
         summary = db.get_summary(st.session_state.user_id)
+
         if summary:
             df = pd.DataFrame(summary, columns=["Date", "Total Calories"])
             st.bar_chart(df.set_index("Date"))
-            st.metric("Total Calories", f"{db.get_total_calories(st.session_state.user_id):.0f} kcal")
+            st.metric(
+                "Total Calories",
+                f"{db.get_total_calories(st.session_state.user_id):.0f} kcal",
+            )
         else:
             st.info("No summary available.")
