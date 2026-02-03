@@ -62,7 +62,7 @@ if not st.session_state.logged_in:
 
         if st.button("Register"):
             if username and password:
-                success = auth.register(username, password)
+                success = auth.register_ui(username, password)
                 if success:
                     st.success("User registered successfully!")
                 else:
